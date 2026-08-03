@@ -1,0 +1,7 @@
+[build]
+  command = "npm --prefix frontend install && npm --prefix frontend run build"
+  publish = "frontend/dist"
+  functions = "netlify/functions"
+
+[context.production.environment]
+  NODE_VERSION = "18"

@@ -1,20 +1,18 @@
 import React from 'react';
-import { Outlet, Link } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import Login from './pages/Login';
+import Dashboard from './pages/Dashboard';
+import Withdraw from './pages/Withdraw';
 
-export default function App() {
+export default function App(){
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100">
-      <header className="p-4 border-b border-slate-800">
-        <div className="max-w-xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-semibold">Earn'n'Pay</h1>
-          <nav>
-            <Link to="/withdraw" className="bg-teal-500 text-white px-3 py-1 rounded">Withdraw</Link>
-          </nav>
-        </div>
-      </header>
-      <main className="max-w-xl mx-auto p-4">
-        <Outlet />
-      </main>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/login" element={<Login/>} />
+        <Route path="/withdraw" element={<Withdraw/>} />
+        <Route path="/" element={<Dashboard/>} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
