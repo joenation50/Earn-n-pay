@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import supabase from '../lib/supabaseClient';
 
 const PROVIDERS = ['PalmPay', 'Opay', 'Kuda', 'GTBank', 'UBA', 'Wallet'];
 
@@ -12,25 +12,34 @@ export default function Withdraw() {
   async function submit(e) {
     e.preventDefault();
     setStatus('submitting');
-    const token = localStorage.getItem('token');
     try {
-      const r = await axios.post('http://localhost:4000/api/withdrawals', {
-        provider, providerAccount: account, amount: parseFloat(amount)
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error('Not authenticated');
+      const userId = session.user.id;
+
+      // fetch user to check wallet
+      const { data: user } = await supabase.from('users').select('*').eq('id', userId).single();
+      if (!user) throw new Error('User not found');
+      const amountCents = Math.round(parseFloat(amount) * 100);
+      if (amountCents <= 0 || amountCents > user.wallet) throw new Error('Invalid amount');
+
+      // create withdrawal
+      const { data: w, error } = await supabase.from('withdrawals').insert([{ user_id: userId, provider, provider_account: account, amount_cents: amountCents, status: 'pending' }]).select().single();
+      if (error) throw error;
+
+      // decrement wallet
+      await supabase.from('users').update({ wallet: user.wallet - amountCents }).eq('id', userId);
+
+      // simulate payout
+      setTimeout(async () => {
+        const success = Math.random() > 0.2;
+        const newStatus = success ? 'success' : 'failed';
+        await supabase.from('withdrawals').update({ status: newStatus, provider_tx_ref: success ? `SIM-${w.id}` : null }).eq('id', w.id);
+      }, 2000);
+
       setStatus('Processing');
-      const id = r.data.withdrawalId;
-      const interval = setInterval(async () => {
-        const res = await axios.get('http://localhost:4000/api/withdrawals', { headers: { Authorization: `Bearer ${token}` }});
-        const w = res.data.find(x=>x.id === id);
-        if (w && w.status !== 'pending' && w.status !== 'processing') {
-          setStatus(w.status);
-          clearInterval(interval);
-        }
-      }, 1500);
     } catch (err) {
-      setStatus('failed');
+      setStatus('failed: ' + (err.message || JSON.stringify(err)));
     }
   }
 
