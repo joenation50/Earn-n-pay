@@ -1,0 +1,2 @@
+Trigger redeploy: added supabase debug log to print configured state and URL (no secrets)
+Timestamp: 2026-08-04T00:20:00Z

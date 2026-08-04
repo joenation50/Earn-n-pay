@@ -17,4 +17,8 @@ const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
+// Lightweight debug log: prints the Supabase URL that was embedded at build time and whether auth is configured.
+// WARNING: we do NOT print the anon key to avoid leaking secrets in logs.
+console.info(`[supabase] configured=${AUTH_CONFIGURED} url=${supabaseUrl ? supabaseUrl : '<not set>'}`);
+
 export default supabase;
