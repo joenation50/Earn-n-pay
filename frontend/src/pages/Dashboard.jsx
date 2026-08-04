@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import supabase from '../lib/supabaseClient';
-import { Link } from 'react-router-dom';
 import Header from '../components/Header';
+import BalanceCard from '../components/BalanceCard';
+import TrustCard from '../components/TrustCard';
+import CheckinCard from '../components/CheckinCard';
+import BottomNav from '../components/BottomNav';
 
 export default function Dashboard() {
   const [user, setUser] = useState(null);
@@ -24,9 +27,7 @@ export default function Dashboard() {
       }
     }
     load();
-    const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      load();
-    });
+    const { data: sub } = supabase.auth.onAuthStateChange(() => load());
     return () => { mounted = false; if (sub && sub.subscription) sub.subscription.unsubscribe(); };
   }, []);
 
@@ -37,32 +38,27 @@ export default function Dashboard() {
   }
 
   return (
-    <div>
+    <div className="min-h-screen pb-28 bg-slate-900">
       <Header />
-      <main className="app-container">
-        <div className="card bg-slate-800 p-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm text-slate-400">Available Balance</div>
-              <div className="text-3xl font-semibold text-amber-400">₦{((user?.wallet ?? 0)/100).toFixed(2)}</div>
-            </div>
-            <div>
-              <div className="text-sm text-slate-400">Trust Score</div>
-              <progress className="progress progress-info" value={user?.trust_score ?? 0} max="100"></progress>
-            </div>
-          </div>
+      <main className="app-container space-y-6">
+        <BalanceCard balanceKobo={user?.wallet ?? 0} />
+
+        <div className="grid grid-cols-1 gap-4">
+          <TrustCard score={user?.trust_score ?? 1} />
+          <CheckinCard streak={3} done={true} />
         </div>
 
-        <section className="mt-6">
+        <section>
           <h2 className="text-lg font-semibold mb-2">Recent Activity</h2>
           <div className="text-slate-400">No activity yet.</div>
         </section>
 
         <div className="mt-6 flex gap-3">
-          <Link to="/withdraw" className="btn btn-primary">Withdraw</Link>
           <button onClick={logout} className="btn btn-ghost">Logout</button>
         </div>
       </main>
+
+      <BottomNav />
     </div>
   );
 }
