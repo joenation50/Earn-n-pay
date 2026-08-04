@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex">
+    <title>Redirecting...</title>
+    <script>
+      // Serve index.html content for any 404 so the SPA router can handle client-side routes.
+      (async () => {
+        try {
+          const index = await fetch('./index.html');
+          const text = await index.text();
+          document.open();
+          document.write(text);
+          document.close();
+        } catch (e) {
+          // fallback: redirect to site root
+          location.replace('./');
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    Redirecting...
+  </body>
+</html>
