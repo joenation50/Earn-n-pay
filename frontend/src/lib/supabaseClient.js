@@ -3,8 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is not set. Check Netlify env vars.');
+export const AUTH_CONFIGURED = Boolean(supabaseUrl && supabaseAnonKey);
+
+if (!AUTH_CONFIGURED) {
+  console.warn('VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is not set. Check Netlify env vars. Auth will not work until these are configured.');
 }
 
 // create supabase client with standard settings

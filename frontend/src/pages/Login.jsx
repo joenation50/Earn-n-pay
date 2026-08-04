@@ -1,5 +1,5 @@
 import React, {useState, useEffect} from 'react';
-import supabase from '../lib/supabaseClient';
+import supabase, { AUTH_CONFIGURED } from '../lib/supabaseClient';
 import { useNavigate } from 'react-router-dom';
 
 export default function Login() {
@@ -15,8 +15,13 @@ export default function Login() {
     // Redirect if already logged in
     let mounted = true;
     async function check() {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session && mounted) nav('/');
+      try {
+        if (!AUTH_CONFIGURED) return;
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session && mounted) nav('/');
+      } catch (err) {
+        console.warn('Auth check failed:', err);
+      }
     }
     check();
     return () => { mounted = false; };
@@ -26,6 +31,12 @@ export default function Login() {
     e.preventDefault();
     setMessage(null);
     setLoading(true);
+
+    if (!AUTH_CONFIGURED) {
+      setMessage('Authentication is not configured. Please set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in your environment and redeploy.');
+      setLoading(false);
+      return;
+    }
 
     try {
       if (isRegister) {
@@ -61,8 +72,14 @@ export default function Login() {
       nav('/');
 
     } catch (err) {
+      console.error('Auth error', err);
       const text = err?.message || JSON.stringify(err);
-      setMessage(text);
+      // Provide clearer guidance for invalid URL errors
+      if (text.toLowerCase().includes('invalid path specified')) {
+        setMessage('Auth endpoint appears misconfigured. Ensure VITE_SUPABASE_URL is set to your Supabase project URL (https://xyz.supabase.co) and that you rebuilt the site after setting env vars.');
+      } else {
+        setMessage(text);
+      }
     } finally {
       setLoading(false);
     }
@@ -75,6 +92,12 @@ export default function Login() {
           <div className="card-body">
             <h2 className="card-title">{isRegister ? 'Create account' : 'Welcome back'}</h2>
             <p className="text-slate-400">{isRegister ? 'Register to start earning' : 'Login to continue'}</p>
+
+            {!AUTH_CONFIGURED && (
+              <div className="alert alert-warning mt-3">
+                <div>Authentication is not configured. Please set <code>VITE_SUPABASE_URL</code> and <code>VITE_SUPABASE_ANON_KEY</code> in your environment and redeploy the site.</div>
+              </div>
+            )}
 
             {message && (
               <div className="alert alert-info mt-3">
@@ -90,7 +113,7 @@ export default function Login() {
             <input type="password" className="input input-bordered w-full mt-3" placeholder="Password" value={password} onChange={e=>setPassword(e.target.value)} />
 
             <div className="mt-4">
-              <button className={`btn btn-primary w-full ${loading ? 'loading' : ''}`} onClick={submit} disabled={loading}>{isRegister ? 'Create account' : 'Sign in'}</button>
+              <button className={`btn btn-primary w-full ${loading ? 'loading' : ''}`} onClick={submit} disabled={loading || !AUTH_CONFIGURED}>{isRegister ? 'Create account' : 'Sign in'}</button>
             </div>
 
             <div className="mt-3 text-center text-slate-400">
